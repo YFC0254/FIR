@@ -8,42 +8,25 @@ import numpy as np
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 import scipy.io.wavfile as wavfile
-#读取音频
-sample_rate, data = wavfile.read('music1u-32.wav')
-# 定义采样频率和时间向量
-fs = sample_rate  # 采样率（Hz）
+import Myhilbert
+fn='music1u-32.wav'
+import soundfile as sf
+win='hann'
+N=311
 
-x=data
-# 设计带阻滤波器以消除9 kHz和14 kHz处的干扰
-nyq = 0.5 * sample_rate
-f0 = [8500, 9500]  # 9 kHz处带阻滤波器的截止频率
-f1 = [13500, 14500]  # 14 kHz处带阻滤波器的截止频率
-b, a = signal.butter(4, [f0[0]/nyq, f0[1]/nyq], btype='bandstop')
-x_filtered_9k = signal.filtfilt(b, a, x)
-b, a = signal.butter(4, [f1[0]/nyq, f1[1]/nyq], btype='bandstop')
-x_filtered_14k = signal.filtfilt(b, a, x_filtered_9k)
-
-analytic_signal = x_filtered_14k
-amplitude_envelope = np.abs(analytic_signal)
-fft_x=np.abs(np.fft.fft(x))
-# 绘制滤波前后的频谱图
-plt.figure(figsize=(10, 8))
-plt.subplot(2, 1, 1)
-plt.specgram(data, Fs=fs, NFFT=1024, noverlap=512, cmap='viridis')
-plt.title('Original Audio')
-plt.xlabel('Time')
-plt.ylabel('Frequency')
-plt.colorbar()
-
-plt.subplot(2, 1, 2)
-plt.specgram(amplitude_envelope, Fs=fs, NFFT=1024, noverlap=512, cmap='viridis')
-plt.title('Filtered Audio with Hilbert Transform')
-plt.xlabel('Time')
-plt.ylabel('Frequency')
-plt.colorbar()
-
-plt.tight_layout()
-plt.show()
-
-# 创建一个新的音频文件，并按照新的参数写入音频数据
-wavfile.write('new.wav', sample_rate, data)
+# 读取音频文件
+audio, samplerate = sf.read(fn)
+orthogonality_data, h = Myhilbert.hilbert(311, win, audio)
+# 设置滤波器参数
+cutoff_freq = 7000  # 设置截止频率为7kHz
+nyquist_freq = 0.5 * samplerate
+num_taps = N  # FIR滤波器阶数
+taps = signal.firwin(num_taps, cutoff_freq / nyquist_freq, window=win)  # 创建窗的FIR滤波器系数
+# 对音频数据进行滤波
+filtered_audio = signal.convolve(audio, taps, mode='same')
+# 将音频数据转换为整数类型
+filtered_audio = filtered_audio.astype(np.int16)
+#保存文件地址
+output_file = f"{win}_阶数{N}_fir_.wav"
+# 保存滤波后的音频文件
+sf.write(output_file, filtered_audio, samplerate)

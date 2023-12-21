@@ -24,4 +24,4 @@ filtered_audio = signal.convolve(audio_data, taps, mode='same')
 filtered_audio = filtered_audio.astype(np.int16)
 
 # 保存滤波后的音频文件
-wav.write('output_fir.wav', sample_rate, filtered_audio)
+wav.write('output_fir1.wav', sample_rate, filtered_audio)
