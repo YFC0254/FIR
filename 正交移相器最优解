@@ -1,0 +1,35 @@
+import numpy as np
+import matplotlib.pyplot as plt
+N = 64  # 选择滤波器长度
+t = np.linspace(0, 1, N, endpoint=False)  # 时间范围
+
+# 创建一个信号
+x = np.sin(2 * np.pi * 5 * t)
+
+# 创建希尔伯特变换滤波器系数h
+h = np.zeros(N)
+for n in range(N):
+    if n != N//2:
+        h[n] = 1/(np.pi*(n-N/2))
+han=np.hanning(N)
+hx=han*h
+# 对信号进行希尔伯特变换
+x_hilbert = np.convolve(x, hx, mode='same')
+
+# 对x进行时移操作，使得其时延N/2后的信号与x_hilbert正交
+x_delayed = np.roll(x, N//2)
+
+# 计算内积得到正交条件
+inner_product = np.dot(x_hilbert, x_delayed)
+
+# 将x_hilbert和经过时移的x进行卷积，得到滤波后的信号y
+y = np.convolve(x_hilbert, x_delayed, mode='same')
+
+# 绘制结果
+plt.plot(t, x_delayed, label='原始信号')
+plt.plot(t, y, label='滤波后的信号')
+plt.legend()
+plt.show()
+
+# 输出内积结果
+print('内积结果：', inner_product)
